@@ -4,6 +4,17 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+
+/*
+ @Param pared,oro,plata,cobre: son los prefabs de los objetos que se van a graficar.SIEMPRE DEBEN TENER TAG
+ @param plano: es la superficie donde se encuentra  la escala x y z es el número de filas y columnas del diccionario
+ @param mina el Gameobject que contiene todos los prefabs
+ @param toggles: lista de toggles que indican que elemento se esta editando.
+ @param ancho,alto tamaño del diccionario
+ @param activo:toggle auxiliar que indica que elemento se esta editando.
+ @param mapa:diccionario que almacena el mapa,este es el que se exporta a json
+ @param objetos_mapa aqui se guardan la instancia a los objetos del mapa.
+     */
 public class EditarMapaController : MonoBehaviour
 {
 
@@ -22,11 +33,14 @@ public class EditarMapaController : MonoBehaviour
 
     public Dictionary<int, Dictionary<int, string>> mapa;
 
+    public Dictionary<int, Dictionary<int, GameObject>> objetos_mapa;
+
 
 
     void Start()
     {
         mapa = new Dictionary<int, Dictionary<int, string>>();
+        objetos_mapa = new Dictionary<int, Dictionary<int, GameObject>>();
         ancho = (int)plano.transform.localScale.x;
         alto = (int)plano.transform.localScale.z;
         CrearTerreno();
@@ -36,7 +50,6 @@ public class EditarMapaController : MonoBehaviour
 
     public void LateUpdate()
     {
-
         ValidarToggles();
 
     }
@@ -57,22 +70,25 @@ public class EditarMapaController : MonoBehaviour
     }
 
 
-    //Inicializa todo el terreno con rocas
+    //Inicializa todo el terreno con rocas(paredes)
     public void CrearTerreno()
     {
         for (int i = 0; i < alto; i++)
         {
             Dictionary<int, string> aux = new Dictionary<int, string>();
+            Dictionary<int, GameObject> aux2 = new Dictionary<int, GameObject>();
             for (int j = 0; j < ancho; j++)
             {
 
                 GameObject temp = Instantiate(pared, new Vector3((j * 10) + 5, 0, (i * 10) + 5), Quaternion.identity);
-                aux.Add(j, temp.name);
+                aux.Add(j, temp.tag);
+                
                 temp.transform.parent = mina.transform;
-
+                aux2.Add(j, temp);
             }
             //////Corregir
             mapa.Add(i, aux);
+            objetos_mapa.Add(i, aux2);
         }
     }
 
@@ -80,12 +96,8 @@ public class EditarMapaController : MonoBehaviour
     //x,z son las posiciones del mouse
     public void EliminarElemento(int x, int z)
     {
-        ///////////////Corregir metodo
-            // Debug.Log(x_temp + "," + z_temp + "Object " + mapa[x_temp][z_temp]);
-          //  Destroy(mapa[x][z]);
-            mapa[x][z] = null;
-        
-
+        Destroy(objetos_mapa[x][z]);
+        mapa[x][z] = null;
     }
     public void ValidarToggles()
     {
@@ -139,8 +151,9 @@ public class EditarMapaController : MonoBehaviour
     {
         EliminarElemento(x, z);
         GameObject temp = Instantiate(prefab, new Vector3((z * 10) + 5, 0, (x * 10) + 5), Quaternion.identity);
-        mapa[x][z] = temp.name;
+        mapa[x][z] = temp.tag;
         mina.transform.parent = temp.transform;
+        objetos_mapa[x][z] = temp;
 
     }
     public void SaveMine()
